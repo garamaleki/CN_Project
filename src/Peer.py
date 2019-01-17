@@ -42,7 +42,21 @@ class Peer:
         :type is_root: bool
         :type root_address: tuple
         """
-        pass
+
+        self.ip = server_ip
+        self.port = server_port
+        self.is_root = is_root
+        self.stream = Stream(server_ip, server_port)
+        self.packet_factory = PacketFactory()
+        self.user_interface = UserInterface()
+        self.reunion_daemon_thread = threading.Thread(target=self.run_reunion_daemon)
+
+        if is_root:
+            self.network_graph = NetworkGraph(GraphNode((self.ip, self.port)))
+        else:
+            self.root_address = root_address
+
+        self.start_user_interface()
 
     def start_user_interface(self):
         """
@@ -50,7 +64,7 @@ class Peer:
 
         :return:
         """
-        pass
+        self.user_interface.run()
 
     def handle_user_interface_buffer(self):
         """
@@ -65,7 +79,15 @@ class Peer:
             2. Don't forget to clear our UserInterface buffer.
         :return:
         """
-        pass
+        while True:
+            message = self.user_interface.buffer.pop()
+
+            if message == "Register":
+                pass
+            elif message == "Advertise":
+                pass
+            elif message[:11] == "SendMessage":
+                pass
 
     def run(self):
         """
@@ -142,7 +164,22 @@ class Peer:
         :type packet Packet
 
         """
-        pass
+
+        if packet.get_length() != len(packet.get_body()):
+            raise ValueError("length field does not match packet's body length")
+
+        if packet.get_type() == 1:
+            self.__handle_register_packet(packet)
+        elif packet.get_type() == 2:
+            self.__handle_advertise_packet(packet)
+        elif packet.get_type() == 3:
+            self.__handle_join_packet(packet)
+        elif packet.get_type() == 4:
+            self.__handle_message_packet(packet)
+        elif packet.get_type() == 5:
+            self.__handle_reunion_packet(packet)
+        else:
+            pass
 
     def __check_registered(self, source_address):
         """
@@ -282,4 +319,6 @@ class Peer:
         :param sender: Sender of the packet
         :return: The specified neighbour for the sender; The format is like ('192.168.001.001', '05335').
         """
-        pass
+
+        graph_node = self.network_graph.find_live_node(sender)
+        return (graph_node.address[0], graph_node.address[1])
