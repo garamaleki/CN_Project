@@ -332,13 +332,30 @@ class PacketFactory:
         :rtype Packet
         """
         header = "15"
-        #header +=
+        bl = str(5 + 20 * len(nodes_array))
+        for i in range(5 - len(bl)):
+            header += "0"
+        header += bl
         header += source_server_address[0]
-        port = str(source_server_address[1])
+        port = str(int(source_server_address[1]))
         for i in range(5 - len(port)):
             header += "0"
         header += port
         body = ""
+        if(type == "request"):
+            body += "REQ"
+        else:
+            body += "RES"
+        noe = len(nodes_array)
+        if(noe < 10):
+            body += 0
+        body += str(noe)
+        for i in range(noe):
+            body += nodes_array[i][1]
+            pi = str(int(nodes_array[i][2]))
+            for j in range(5-len(pi)):
+                body += "0"
+            body += pi
         packet = Packet(header + body)
         return packet
 
@@ -363,7 +380,7 @@ class PacketFactory:
         else:
             header += "00023"
         header += source_server_address[0]
-        port = str(source_server_address[1])
+        port = str(int(source_server_address[1]))
         for i in range(5 - len(port)):
             header += "0"
         header += port
@@ -391,7 +408,7 @@ class PacketFactory:
         header = "13"
         header += "00004"
         header += source_server_address[0]
-        port = str(source_server_address[1])
+        port = str(int(source_server_address[1]))
         for i in range(5 - len(port)):
             header += "0"
         header += port
@@ -420,7 +437,7 @@ class PacketFactory:
         else:
             header += "00006"
         header += source_server_address[0]
-        port = str(source_server_address[1])
+        port = str(int(source_server_address[1]))
         for i in range(5 - len(port)):
             header += "0"
         header += port
@@ -455,7 +472,7 @@ class PacketFactory:
             header += "0"
         header += bl
         header += source_server_address[0]
-        port = str(source_server_address[1])
+        port = str(int(source_server_address[1]))
         for i in range(5 - len(port)):
             header += "0"
         header += port
