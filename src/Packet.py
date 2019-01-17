@@ -314,13 +314,14 @@ class PacketFactory:
             packet += "0"
         packet += port
         packet += body
-        return packet
+        p = Packet(packet)
+        return p
 
     @staticmethod
-    def new_reunion_packet(type, source_address, nodes_array):
+    def new_reunion_packet(type, source_server_address, nodes_array):
         """
         :param type: Reunion Hello (REQ) or Reunion Hello Back (RES)
-        :param source_address: IP/Port address of the packet sender.
+        :param source_server_address: IP/Port address of the packet sender.
         :param nodes_array: [(ip0, port0), (ip1, port1), ...] It is the path to the 'destination'.
 
         :type type: str
@@ -330,10 +331,19 @@ class PacketFactory:
         :return New reunion packet.
         :rtype Packet
         """
-        pass
+        header = "15"
+        #header +=
+        header += source_server_address[0]
+        port = str(source_server_address[1])
+        for i in range(5 - len(port)):
+            header += "0"
+        header += port
+        body = ""
+        packet = Packet(header + body)
+        return packet
 
     @staticmethod
-    def new_advertise_packet(type, source_server_address, neighbour=None):
+    def new_advertise_packet(type, source_server_address, neighbour=(None, None)):
         """
         :param type: Type of Advertise packet
         :param source_server_address Server address of the packet sender.
@@ -347,7 +357,25 @@ class PacketFactory:
         :rtype Packet
 
         """
-        pass
+        header = "12"
+        if(type == "request"):
+            header += "00003"
+        else:
+            header += "00023"
+        header += source_server_address[0]
+        port = str(source_server_address[1])
+        for i in range(5 - len(port)):
+            header += "0"
+        header += port
+        body = ""
+        if (type == "request"):
+            body += "REQ"
+        else:
+            body += "RES"
+            body += neighbour[0]
+            body += neighbour[1]
+        packet = Packet(header + body)
+        return packet
 
     @staticmethod
     def new_join_packet(source_server_address):
@@ -360,7 +388,16 @@ class PacketFactory:
         :rtype Packet
 
         """
-        pass
+        header = "13"
+        header += "00004"
+        header += source_server_address[0]
+        port = str(source_server_address[1])
+        for i in range(5 - len(port)):
+            header += "0"
+        header += port
+        body = "JOIN"
+        packet = Packet(header + body)
+        return packet
 
     @staticmethod
     def new_register_packet(type, source_server_address, address=(None, None)):
@@ -377,7 +414,26 @@ class PacketFactory:
         :rtype Packet
 
         """
-        pass
+        header = "11"
+        if(type == "request"):
+            header += "00023"
+        else:
+            header += "00006"
+        header += source_server_address[0]
+        port = str(source_server_address[1])
+        for i in range(5 - len(port)):
+            header += "0"
+        header += port
+        body = ""
+        if (type == "request"):
+            body += "REQ"
+            body += address[0]
+            body += address[1]
+        else:
+            body += "RES"
+            body += "ACK"
+            packet = Packet(header + body)
+        return packet
 
     @staticmethod
     def new_message_packet(message, source_server_address):
@@ -393,4 +449,15 @@ class PacketFactory:
         :return: New Message packet.
         :rtype: Packet
         """
-        pass
+        header = "14"
+        bl = str(len(message))
+        for i in range(5-len(bl)):
+            header += "0"
+        header += bl
+        header += source_server_address[0]
+        port = str(source_server_address[1])
+        for i in range(5 - len(port)):
+            header += "0"
+        header += port
+        packet = Packet(header + message)
+        return packet
