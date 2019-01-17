@@ -177,18 +177,23 @@
             
     
 """
-from struct import *
+from struct import unpack, pack
 
 
 class Packet:
     def __init__(self, buf):
         """
         The decoded buffer should convert to a new packet.
-
         :param buf: Input buffer was just decoded.
         :type buf: bytearray
         """
-        pass
+        self.header = buf[0:27]
+        self.body = buf[27:len(buf)]
+        self.version = int(buf[0])
+        self.type = int(buf[1])
+        self.length = int(buf[2:7])
+        self.ip = buf[7:22]
+        self.port = str(int(buf[22:27]))
 
     def get_header(self):
         """
@@ -196,7 +201,7 @@ class Packet:
         :return: Packet header
         :rtype: str
         """
-        pass
+        return self.header
 
     def get_version(self):
         """
@@ -204,7 +209,7 @@ class Packet:
         :return: Packet Version
         :rtype: int
         """
-        pass
+        return self.version
 
     def get_type(self):
         """
@@ -212,7 +217,7 @@ class Packet:
         :return: Packet type
         :rtype: int
         """
-        pass
+        return self.type
 
     def get_length(self):
         """
@@ -220,7 +225,7 @@ class Packet:
         :return: Packet length
         :rtype: int
         """
-        pass
+        return self.length
 
     def get_body(self):
         """
@@ -228,7 +233,7 @@ class Packet:
         :return: Packet body
         :rtype: str
         """
-        pass
+        return self.body
 
     def get_buf(self):
         """
@@ -237,7 +242,13 @@ class Packet:
         :return The parsed packet to the network format.
         :rtype: bytearray
         """
-        pass
+        ipb = []
+        for i in range(4):
+            ipb.append(int(self.header[7 + i * 4:10 + i * 4]))
+        form = ">HHiHHHHi" + str(len(self.body)) + "s"
+        buf = pack(form, self.version, self.type, self.length, ipb[0], ipb[1], ipb[2], ipb[3], int(self.port),
+                   self.body.encode('utf-8'))
+        return buf
 
     def get_source_server_ip(self):
         """
@@ -245,7 +256,7 @@ class Packet:
         :return: Server IP address for the sender of the packet.
         :rtype: str
         """
-        pass
+        return self.ip
 
     def get_source_server_port(self):
         """
@@ -253,7 +264,7 @@ class Packet:
         :return: Server Port address for the sender of the packet.
         :rtype: str
         """
-        pass
+        return self.port
 
     def get_source_server_address(self):
         """
@@ -261,7 +272,10 @@ class Packet:
         :return: Server address; The format is like ('192.168.001.001', '05335').
         :rtype: tuple
         """
-        pass
+        address = []
+        address.append(self.port)
+        address.append(self.ip)
+        return address
 
 
 class PacketFactory:
@@ -280,7 +294,27 @@ class PacketFactory:
         :rtype: Packet
 
         """
-        pass
+        primary = unpack(">HHiHHHHi", buffer[0:20])
+        l = str(len(buffer) - 20) + "s"
+        body = str(unpack(l, buffer[20:len(buffer)])[0])
+        body = body[2:len(body) - 1]
+        packet = str(primary[0]) + str(primary[1])
+        bl = str(primary[2])
+        port = str(primary[7])
+        for i in range(5 - len(bl)):
+            packet += "0"
+        packet += bl
+        for i in range(3, 7):
+            for j in range(3 - len(str(primary[i]))):
+                packet += "0"
+            packet += str(primary[i])
+            if (i != 6):
+                packet += "."
+        for i in range(5 - len(port)):
+            packet += "0"
+        packet += port
+        packet += body
+        return packet
 
     @staticmethod
     def new_reunion_packet(type, source_address, nodes_array):

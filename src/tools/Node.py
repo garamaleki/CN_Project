@@ -67,6 +67,7 @@ class Node:
         :return: Formatted IP
         :rtype: str
         """
+        ret
         return '.'.join(str(int(part)).zfill(3) for part in ip.split('.'))
 
     @staticmethod
