@@ -19,7 +19,7 @@ class Node:
         """
         self.server_ip = Node.parse_ip(server_address[0])
         self.server_port = Node.parse_port(server_address[1])
-
+        self.is_register = set_register
         print("Server Address: ", server_address)
 
         self.out_buff = []
@@ -56,6 +56,9 @@ class Node:
         :rtype: tuple
         """
         return self.server_ip, self.server_port
+
+    def get_is_register(self):
+        return self.is_register
 
     @staticmethod
     def parse_ip(ip):
