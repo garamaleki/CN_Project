@@ -9,19 +9,24 @@ class GraphNode:
         :type address: tuple
 
         """
-        pass
+        self.address = address
+        self.ip = address[0]
+        self.port = address[1]
+        self.parent = None
+        self.children = []
+        self.alive = False
 
     def set_parent(self, parent):
-        pass
+        self.parent = parent
 
     def set_address(self, new_address):
-        pass
+        self.address = new_address
 
     def __reset(self):
         pass
 
     def add_child(self, child):
-        pass
+        self.children.append(child)
 
 
 class NetworkGraph:
@@ -48,10 +53,26 @@ class NetworkGraph:
         :return: Best neighbour for sender.
         :rtype: GraphNode
         """
-        pass
+
+        n = len(self.nodes)
+        queue = [self.root]
+
+        while len(queue) > 0:
+            node = queue.pop(0)
+
+            if node.address == sender:
+                continue
+
+            if len(node.children) < 2:
+                return node
+
+            queue.append(node.children[0])
+            queue.append(node.children[1])
 
     def find_node(self, ip, port):
-        pass
+        for node in self.nodes:
+            if node.ip == ip and node.port == port:
+                return node
 
     def turn_on_node(self, node_address):
         pass
@@ -60,7 +81,30 @@ class NetworkGraph:
         pass
 
     def remove_node(self, node_address):
-        pass
+
+        parent = None
+        node_itself = None
+        index = None
+        for i, node in enumerate(self.nodes):
+            if node.address == node_address:
+                node_itself = node
+                index = i
+                break
+
+        parent = node_itself.parent
+        child_index = None
+
+        for i, child in enumerate(parent.children):
+            if child.address == node_itself.address:
+                child_index = i
+                break
+
+        del parent.children[child_index]
+
+        for child in node_itself.chidlren:
+            child.set_parent(None)
+
+        del self.nodes[index]
 
     def add_node(self, ip, port, father_address):
         """
@@ -81,4 +125,15 @@ class NetworkGraph:
 
         :return:
         """
-        pass
+        father_node = self.find_node(father_address[0], father_address[1])
+        if father_node is not None:
+            child_node = self.find_node(ip, port)
+
+            if child_node is None:
+                child_node = GraphNode((ip, port))
+                self.nodes.append(child_node)
+
+            father_node.add_child(child_node)
+            child_node.set_parent(father_node)
+
+
