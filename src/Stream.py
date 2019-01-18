@@ -74,7 +74,7 @@ class Stream:
 
         :return:
         """
-        self.nodes.append(Node(server_address,set_register=set_register_connection))
+        self.nodes.append(Node(server_address, set_register=set_register_connection))
 
     def remove_node(self, node):
         """
@@ -108,7 +108,7 @@ class Stream:
         nip = Node.parse_ip(ip)
         nport = Node.parse_port(port)
         for node in self.nodes:
-            if node.get_server_address()[0] == nip and node.get_server_address()[1] == nport :
+            if node.get_server_address()[0] == nip and node.get_server_address()[1] == nport:
                 return node
 
     def add_message_to_out_buff(self, address, message):
@@ -124,7 +124,7 @@ class Stream:
 
         :return:
         """
-        naddress = (Node.parse_ip(address[0]),Node.parse_port(address[1]))
+        naddress = (Node.parse_ip(address[0]), Node.parse_port(address[1]))
         for node in self.nodes:
             if node.get_server_address() == naddress:
                 node.add_message_to_out_buff(message)
@@ -153,7 +153,7 @@ class Stream:
         """
         try:
             node.send_message()
-        except:
+        except Exception:
             self.remove_node(node)
 
     def send_out_buf_messages(self, only_register=False):
@@ -164,8 +164,8 @@ class Stream:
         """
         if only_register:
             for node in self.nodes:
-                if(node.get_is_register()):
+                if (node.get_is_register()):
                     self.send_messages_to_node(node)
         else:
             for node in self.nodes:
-                    self.send_messages_to_node(node)
+                self.send_messages_to_node(node)
