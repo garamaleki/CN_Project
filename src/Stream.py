@@ -20,7 +20,7 @@ class Stream:
 
         ip = Node.parse_ip(ip)
         port = Node.parse_port(port)
-
+        tcpserver = TCPServer()
         self._server_in_buf = []
 
         def callback(address, queue, data):

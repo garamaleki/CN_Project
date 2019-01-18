@@ -179,6 +179,8 @@
 """
 from struct import unpack, pack
 
+from src.tools.Node import Node
+
 
 class Packet:
     def __init__(self, buf):
@@ -304,12 +306,12 @@ class PacketFactory:
         for i in range(5 - len(bl)):
             packet += "0"
         packet += bl
+        ip = ""
         for i in range(3, 7):
-            for j in range(3 - len(str(primary[i]))):
-                packet += "0"
-            packet += str(primary[i])
-            if (i != 6):
-                packet += "."
+            ip += str(primary[i])
+            if(i!=6):
+                ip += '.'
+        packet += Node.parse_ip(ip)
         for i in range(5 - len(port)):
             packet += "0"
         packet += port
