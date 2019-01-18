@@ -36,14 +36,13 @@ class Stream:
         self.port = port
         self._server_in_buf = []
         self.nodes = []
+        mode = ip
         if (ip == Node.parse_ip("0.0.0.0")):
             mode = "public"
         elif (ip == Node.parse_ip("127.0.0.1")):
             mode = "localhost"
-        else:
-            mode = ip
-        tcpserver = TCPServer(mode, port, callback, 5, 2048)
-        receive_thread = threading.Thread(target=tcpserver.run())
+        self.tcp_server = TCPServer(mode, port, callback, 5, 2048)
+        receive_thread = threading.Thread(target=self.tcp_server.run())
         receive_thread.start()
 
     def get_server_address(self):
@@ -74,7 +73,14 @@ class Stream:
 
         :return:
         """
-        self.nodes.append(Node(server_address, set_register=set_register_connection))
+        check = True
+        for node in self.nodes:
+            nip = node.get_server_address()[0]
+            nport = node.get_server_address()[1]
+            if nip == Node.parse_ip(server_address[0]) and nport == Node.parse_port(server_address[1]):
+                check = False
+        if check:
+            self.nodes.append(Node(server_address, set_register_connection))
 
     def remove_node(self, node):
         """
@@ -111,7 +117,7 @@ class Stream:
             if node.get_server_address()[0] == nip and node.get_server_address()[1] == nport:
                 return node
 
-    def add_message_to_out_buff(self, address, message):
+    def add_message_to_out_buff(self, address, is_root, message):
         """
         In this function, we will add the message to the output buffer of the node that has the input address.
         Later we should use send_out_buf_messages to send these buffers into their sockets.
@@ -126,7 +132,7 @@ class Stream:
         """
         naddress = (Node.parse_ip(address[0]), Node.parse_port(address[1]))
         for node in self.nodes:
-            if node.get_server_address() == naddress:
+            if node.get_server_address() == naddress and node.get_is_register() == is_root:
                 node.add_message_to_out_buff(message)
 
     def read_in_buf(self):
@@ -168,4 +174,4 @@ class Stream:
                     self.send_messages_to_node(node)
         else:
             for node in self.nodes:
-                self.send_messages_to_node(node)
+                    self.send_messages_to_node(node)
