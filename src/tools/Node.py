@@ -30,7 +30,7 @@ class Node:
             mode = "localhost"
         try:
             self.client = ClientSocket(mode,self.server_port,2048,False)
-        except Exception:
+        except:
             self.client.close()
 
     def send_message(self):
