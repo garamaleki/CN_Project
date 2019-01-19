@@ -28,6 +28,7 @@ class Node:
             mode = "public"
         elif (self.server_ip == Node.parse_ip("127.0.0.1")):
             mode = "localhost"
+        self.client = ClientSocket()
         try:
             self.client = ClientSocket(mode,self.server_port,2048,False)
         except:
