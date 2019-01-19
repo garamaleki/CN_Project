@@ -31,7 +31,7 @@ class Node:
         try:
             self.client = ClientSocket(mode,self.server_port,2048,False)
         except:
-            self.client.close()
+            self.close()
 
     def send_message(self):
         """
@@ -39,9 +39,11 @@ class Node:
 
         :return:
         """
-
-        for m in self.out_buff:
-            self.client.send(m)
+        try:
+            for m in self.out_buff:
+                self.client.send(m)
+        except:
+            self.close()
         self.out_buff.clear()
 
     def add_message_to_out_buff(self, message):
