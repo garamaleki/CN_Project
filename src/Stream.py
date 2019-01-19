@@ -30,10 +30,8 @@ class Stream:
         :param port: 5 characters
         """
 
-        ip = Node.parse_ip(ip)
-        port = Node.parse_port(port)
-        self.ip = ip
-        self.port = port
+        self.ip = Node.parse_ip(ip)
+        self.port = Node.parse_port(port)
         self._server_in_buf = []
         self.nodes = []
         mode = ip
@@ -41,8 +39,9 @@ class Stream:
             mode = "public"
         elif (ip == Node.parse_ip("127.0.0.1")):
             mode = "localhost"
+
         self.tcp_server = TCPServer(mode, port, callback, 5, 2048)
-        receive_thread = threading.Thread(target=self.tcp_server.run())
+        receive_thread = threading.Thread(target=self.tcp_server.run)
         receive_thread.start()
 
     def get_server_address(self):
@@ -77,7 +76,8 @@ class Stream:
         for node in self.nodes:
             nip = node.get_server_address()[0]
             nport = node.get_server_address()[1]
-            if nip == Node.parse_ip(server_address[0]) and nport == Node.parse_port(server_address[1]):
+            nregister = node.get_is_register()
+            if nip == Node.parse_ip(server_address[0]) and nport == Node.parse_port(server_address[1]) and nregister == set_register_connection:
                 check = False
         if check:
             self.nodes.append(Node(server_address, set_register_connection))

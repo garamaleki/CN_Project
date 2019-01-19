@@ -39,8 +39,10 @@ class Node:
 
         :return:
         """
+
         for m in self.out_buff:
             self.client.send(m)
+        self.out_buff.clear()
 
     def add_message_to_out_buff(self, message):
         """
@@ -49,6 +51,7 @@ class Node:
         :param message: The message we want to add to out_buff
         :return:
         """
+
         self.out_buff.append(message)
 
     def close(self):

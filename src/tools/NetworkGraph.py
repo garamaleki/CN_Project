@@ -23,7 +23,11 @@ class GraphNode:
         self.address = new_address
 
     def __reset(self):
-        pass
+        self.address = None
+        self.parent = None
+        self.ip, self.port = None, None
+        self.alive = False
+        self.children = []
 
     def add_child(self, child):
         self.children.append(child)
@@ -54,13 +58,15 @@ class NetworkGraph:
         :rtype: GraphNode
         """
 
-        n = len(self.nodes)
         queue = [self.root]
 
         while len(queue) > 0:
             node = queue.pop(0)
 
             if node.address == sender:
+                continue
+
+            if not node.alive:
                 continue
 
             if len(node.children) < 2:
@@ -75,34 +81,49 @@ class NetworkGraph:
                 return node
 
     def turn_on_node(self, node_address):
-        pass
+
+        node = self.find_node(node_address[0], node_address[1])
+        if node is not None:
+            node.alive = True
 
     def turn_off_node(self, node_address):
-        pass
+        node = self.find_node(node_address[0], node_address[1])
+        if node is not None:
+            node.alive = False
+            node.parent = None
+            node.children = []
 
     def remove_node(self, node_address):
 
-        parent = None
-        node_itself = None
-        index = None
-        for i, node in enumerate(self.nodes):
-            if node.address == node_address:
-                node_itself = node
+        node = self.find_node(node_address[0], node_address[1])
+
+        if node is not None:
+
+            if node.address == node.parent.children[0].address:
+                del node.parent.children[0]
+            elif node.address == node.parent.children[1].address:
+                del node.parent.children[1]
+
+        sub_tree_nodes = []
+
+        queue = [node]
+
+        while len(queue) > 0:
+
+            _node = queue.pop(0)
+
+            for child in _node.children:
+                queue.append(child)
+                sub_tree_nodes.append(child)
+
+        for sub_tree_node in sub_tree_nodes:
+            self.turn_off_node(sub_tree_node.address)
+
+        index = 0
+        for i, _node in enumerate(self.nodes):
+            if _node.address == node.address:
                 index = i
                 break
-
-        parent = node_itself.parent
-        child_index = None
-
-        for i, child in enumerate(parent.children):
-            if child.address == node_itself.address:
-                child_index = i
-                break
-
-        del parent.children[child_index]
-
-        for child in node_itself.chidlren:
-            child.set_parent(None)
 
         del self.nodes[index]
 
@@ -125,7 +146,11 @@ class NetworkGraph:
 
         :return:
         """
-        father_node = self.find_node(father_address[0], father_address[1])
+
+        father_node = None
+        if father_address is not None:
+            father_node = self.find_node(father_address[0], father_address[1])
+
         if father_node is not None:
             child_node = self.find_node(ip, port)
 
@@ -133,7 +158,15 @@ class NetworkGraph:
                 child_node = GraphNode((ip, port))
                 self.nodes.append(child_node)
 
+            child_node.alive = True
+
             father_node.add_child(child_node)
             child_node.set_parent(father_node)
+
+        else:  # just want to register peer in our network, we will set its father in advertise step
+            child_node = self.find_node(ip, port)
+            if child_node is None:
+                child_node = GraphNode((ip, port))
+                self.nodes.append(child_node)
 
 
