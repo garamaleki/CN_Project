@@ -258,7 +258,7 @@ class Packet:
         :return: Server IP address for the sender of the packet.
         :rtype: str
         """
-        return self.ip
+        return Node.parse_ip(self.ip)
 
     def get_source_server_port(self):
         """
@@ -266,7 +266,7 @@ class Packet:
         :return: Server Port address for the sender of the packet.
         :rtype: str
         """
-        return self.port
+        return Node.parse_port(self.port)
 
     def get_source_server_address(self):
         """
@@ -274,10 +274,8 @@ class Packet:
         :return: Server address; The format is like ('192.168.001.001', '05335').
         :rtype: tuple
         """
-        address = []
-        address.append(self.port)
-        address.append(self.ip)
-        return address
+
+        return (Node.parse_ip(self.ip), Node.parse_port(self.port))
 
 
 class PacketFactory:
@@ -451,7 +449,8 @@ class PacketFactory:
         else:
             body += "RES"
             body += "ACK"
-            packet = Packet(header + body)
+
+        packet = Packet(header + body)
         return packet
 
     @staticmethod

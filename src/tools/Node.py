@@ -29,7 +29,7 @@ class Node:
         elif (self.server_ip == Node.parse_ip("127.0.0.1")):
             mode = "localhost"
         try:
-            self.client = ClientSocket(mode,self.server_port,2048,False)
+            self.client = ClientSocket(mode,int(server_address[1]),2048,False)
         except Exception:
             self.client.close()
 
@@ -39,8 +39,10 @@ class Node:
 
         :return:
         """
+
         for m in self.out_buff:
             self.client.send(m)
+        self.out_buff.clear()
 
     def add_message_to_out_buff(self, message):
         """
@@ -49,6 +51,7 @@ class Node:
         :param message: The message we want to add to out_buff
         :return:
         """
+
         self.out_buff.append(message)
 
     def close(self):
