@@ -23,13 +23,8 @@ class Node:
         print("Server Address: ", server_address)
 
         self.out_buff = []
-        mode = self.server_ip
-        if (self.server_ip == Node.parse_ip("0.0.0.0")):
-            mode = "public"
-        elif (self.server_ip == Node.parse_ip("127.0.0.1")):
-            mode = "localhost"
         try:
-            self.client = ClientSocket(mode,self.server_port,2048,False)
+            self.client = ClientSocket(self.server_ip,self.server_port,2048,False)
         except:
             self.out_buff.clear()
 
@@ -50,7 +45,6 @@ class Node:
         :param message: The message we want to add to out_buff
         :return:
         """
-
         self.out_buff.append(message)
 
     def close(self):
