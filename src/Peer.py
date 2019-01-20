@@ -13,8 +13,8 @@ import threading
 
 """
 
-REUNION_DAEMON_INTERVAL = 4
-MAX_REUNION_INTERVAL = 20
+REUNION_DAEMON_INTERVAL = 1
+MAX_REUNION_INTERVAL = 35
 
 
 # When reunion failed for non-root peer, close all non-register nodes
@@ -56,13 +56,13 @@ class Peer:
         self.user_interface = UserInterface(str(server_ip) + " " + str(server_port))
         time.sleep(0.2)
         self.stream = Stream(server_ip, server_port)
-        self.start_user_interface()  
+        self.start_user_interface()
         self.reunion_daemon_thread = threading.Thread(target=self.run_reunion_daemon)
-        self.parent_address = None 
+        self.parent_address = None
         self.neighbours_address = []
 
         if is_root:
-            self.network_graph = NetworkGraph(GraphNode((SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)))) 
+            self.network_graph = NetworkGraph(GraphNode((SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port))))
             self.reunion_arrival_time_per_peer = {}
             self.reunion_daemon_thread.start()
         else:
@@ -179,15 +179,12 @@ class Peer:
                     if node.address == (SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)):
                         continue
                     if node.alive and self.reunion_arrival_time_per_peer[node.address] + MAX_REUNION_INTERVAL < time.time():
+                        print(self.neighbours_address)
+                        if node.address in self.neighbours_address:
+                            self.neighbours_address.remove(node.address)
                         self.network_graph.remove_node(node.address)
 
             else:
-                if self.parent_address:
-
-                    reunion_packet = self.packet_factory.new_reunion_packet("request", (SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)), [(SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port))])
-                    self.stream.add_message_to_out_buff(self.parent_address, False, reunion_packet.get_buf())
-
-                    self.reunion_send_time = time.time()
 
                 if self.reunion_arrival_time + MAX_REUNION_INTERVAL < time.time():
                     self.neighbours_address.clear()
@@ -257,7 +254,7 @@ class Peer:
 
         :return:
         """
-        if self.network_graph.find_node(source_address[0], source_address[1]) is None:
+        if self.stream.get_node_by_server(source_address[0], source_address[1]) is None:
             return False
 
         return True
@@ -297,6 +294,8 @@ class Peer:
         if self.is_root and packet.get_body()[:3] == "REQ":
 
             if self.__check_registered(packet.get_source_server_address()):
+                if self.network_graph.find_node(packet.get_source_server_ip(), packet.get_source_server_port()) is None:
+                    self.network_graph.add_node(packet.get_source_server_ip(), packet.get_source_server_port(), None)
 
                 if not self.network_graph.find_node(packet.get_source_server_ip(),
                                                     packet.get_source_server_port()).alive:
@@ -327,7 +326,11 @@ class Peer:
                 self.parent_address = (join_ip, join_port)
                 self.stream.add_message_to_out_buff((join_ip, join_port), False, join_packet.get_buf())
 
-                self.neighbours_address.append((join_ip, join_port))
+                reunion_packet = self.packet_factory.new_reunion_packet("request", (SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)), [(SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port))])
+                self.stream.add_message_to_out_buff((join_ip, join_port), False, reunion_packet.get_buf())
+
+                if not (join_ip, join_port) in self.neighbours_address:
+                    self.neighbours_address.append((join_ip, join_port))
 
     def __handle_register_packet(self, packet):
         """
@@ -459,7 +462,18 @@ class Peer:
 
                 if len(nodes_array) == 1:
                     self.reunion_arrival_time = time.time()
-                    self.is_waiting = False
+
+                    if self.parent_address:
+
+                        reunion_packet = self.packet_factory.new_reunion_packet("request", (
+                        SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)), [(SemiNode.parse_ip(self.ip),
+                                                                                       SemiNode.parse_port(
+                                                                                           self.port))])
+                        self.stream.add_message_to_out_buff(self.parent_address, False, reunion_packet.get_buf())
+
+                        self.reunion_send_time = time.time()
+
+                    self.is_waiting = True
                 else:
                     new_packet = self.packet_factory.new_reunion_packet("response", (SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)),
                                                                         nodes_array[1:])
