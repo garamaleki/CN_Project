@@ -53,15 +53,16 @@ class Peer:
         self.port = SemiNode.parse_port(server_port)
         self.is_root = is_root
         self.packet_factory = PacketFactory()
-        self.user_interface = UserInterface()
+        self.user_interface = UserInterface(str(server_ip) + " " + str(server_port))
+        time.sleep(0.2)
         self.stream = Stream(server_ip, server_port)
-        self.start_user_interface()  # only for non-roots or for all?
+        self.start_user_interface()  
         self.reunion_daemon_thread = threading.Thread(target=self.run_reunion_daemon)
-        self.parent_address = None  # Reconsider it
+        self.parent_address = None 
         self.neighbours_address = []
 
         if is_root:
-            self.network_graph = NetworkGraph(GraphNode((SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port))))  # self.ip as SemiNode.parse_ip or not ?
+            self.network_graph = NetworkGraph(GraphNode((SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)))) 
             self.reunion_arrival_time_per_peer = {}
             self.reunion_daemon_thread.start()
         else:
@@ -131,10 +132,11 @@ class Peer:
 
         :return:
         """
+        time.sleep(1)
 
         # TODO: Check reunion????
         while True:
-            print(self.stream.read_in_buf())
+            self.user_interface.add_log(self.stream.read_in_buf())
             stream_buf = self.stream.read_in_buf()
             for buf in stream_buf:  # Are there packets or do we need to parse them?
                 self.handle_packet(PacketFactory.parse_buffer(buf))
@@ -229,19 +231,19 @@ class Peer:
             raise ValueError("length field does not match packet's body length")
 
         if packet.get_type() == 1:
-            print("register packet")
+            self.user_interface.add_log("register packet arrived")
             self.__handle_register_packet(packet)
         elif packet.get_type() == 2:
-            print("advertise packet")
+            self.user_interface.add_log("advertise packet arrived")
             self.__handle_advertise_packet(packet)
         elif packet.get_type() == 3:
-            print("join packet")
+            self.user_interface.add_log("join packet arrived")
             self.__handle_join_packet(packet)
         elif packet.get_type() == 4:
-            print("message packet")
+            self.user_interface.add_log("message packet arrived")
             self.__handle_message_packet(packet)
         elif packet.get_type() == 5:
-            print("reunion packet")
+            self.user_interface.add_log("reunion packet arrived")
             self.__handle_reunion_packet(packet)
         else:
             pass
@@ -289,6 +291,8 @@ class Peer:
 
         :return:
         """
+
+        #  Code design suggestion num 1
 
         if self.is_root and packet.get_body()[:3] == "REQ":
 
@@ -382,7 +386,7 @@ class Peer:
         :return:
         """
 
-        print("Received message:", packet.get_body())
+        self.user_interface.add_log("Received message:" + str(packet.get_body()))
 
         for neighbour in self.neighbours_address:
             if neighbour != packet.get_source_server_address():
