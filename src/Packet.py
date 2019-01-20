@@ -348,11 +348,11 @@ class PacketFactory:
             body += "RES"
         noe = len(nodes_array)
         if(noe < 10):
-            body += 0
+            body += "0"
         body += str(noe)
         for i in range(noe):
-            body += nodes_array[i][1]
-            pi = str(int(nodes_array[i][2]))
+            body += nodes_array[i][0]
+            pi = str(int(nodes_array[i][1]))
             for j in range(5-len(pi)):
                 body += "0"
             body += pi
