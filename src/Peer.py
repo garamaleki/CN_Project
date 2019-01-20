@@ -67,7 +67,7 @@ class Peer:
             self.reunion_daemon_thread.start()
         else:
             self.root_address = root_address
-            self.reunion_send_time, self.reunion_arrival_time = None, None
+            self.reunion_send_time, self.reunion_arrival_time = None, time.time()
             self.is_waiting = False
             self.first_advertise = True
 
@@ -179,14 +179,18 @@ class Peer:
                     if node.address == (SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)):
                         continue
                     if node.alive and self.reunion_arrival_time_per_peer[node.address] + MAX_REUNION_INTERVAL < time.time():
-                        print(self.neighbours_address)
+
+                        if self.reunion_arrival_time_per_peer[node.address]:
+                            del self.reunion_arrival_time_per_peer[node.address]
+
                         if node.address in self.neighbours_address:
                             self.neighbours_address.remove(node.address)
                         self.network_graph.remove_node(node.address)
 
             else:
 
-                if self.reunion_arrival_time + MAX_REUNION_INTERVAL < time.time():
+                if self.reunion_arrival_time + MAX_REUNION_INTERVAL < time.time() and self.is_waiting:
+                    self.is_waiting = False
                     self.neighbours_address.clear()
 
             time.sleep(REUNION_DAEMON_INTERVAL)
@@ -315,8 +319,9 @@ class Peer:
 
                 if self.first_advertise:
                     self.first_advertise = False
-                    self.reunion_arrival_time = time.time()
                     self.reunion_daemon_thread.start()
+
+                self.reunion_arrival_time = time.time()
 
                 join_ip = SemiNode.parse_ip(packet.get_body()[3:18])
                 join_port = SemiNode.parse_port(packet.get_body()[18:23])
@@ -328,6 +333,7 @@ class Peer:
 
                 reunion_packet = self.packet_factory.new_reunion_packet("request", (SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)), [(SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port))])
                 self.stream.add_message_to_out_buff((join_ip, join_port), False, reunion_packet.get_buf())
+                self.is_waiting = True
 
                 if not (join_ip, join_port) in self.neighbours_address:
                     self.neighbours_address.append((join_ip, join_port))
