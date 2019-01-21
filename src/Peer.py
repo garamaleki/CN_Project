@@ -14,7 +14,7 @@ import threading
 """
 
 REUNION_DAEMON_INTERVAL = 1
-MAX_REUNION_INTERVAL = 35
+MAX_REUNION_INTERVAL = 38
 
 
 # When reunion failed for non-root peer, close all non-register nodes
