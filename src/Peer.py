@@ -53,7 +53,7 @@ class Peer:
         self.port = SemiNode.parse_port(server_port)
         self.is_root = is_root
         self.packet_factory = PacketFactory()
-        self.user_interface = UserInterface(str(server_ip) + " " + str(server_port))
+        self.user_interface = UserInterface()
         time.sleep(0.2)
         self.stream = Stream(server_ip, server_port)
         self.start_user_interface()
@@ -135,7 +135,7 @@ class Peer:
         time.sleep(1)
 
         while True:
-            self.user_interface.add_log(self.stream.read_in_buf())
+            print(self.stream.read_in_buf())
             stream_buf = self.stream.read_in_buf()
             for buf in stream_buf:  # Are there packets or do we need to parse them?
                 self.handle_packet(PacketFactory.parse_buffer(buf))
@@ -180,7 +180,7 @@ class Peer:
                     if node.alive and self.reunion_arrival_time_per_peer[node.address] + MAX_REUNION_INTERVAL < time.time():
 
                         if self.reunion_arrival_time_per_peer[node.address]:
-                            self.user_interface.add_log("Disconnected " + str(node.address))
+                            print("Disconnected " + str(node.address))
                             del self.reunion_arrival_time_per_peer[node.address]
 
                         if node.address in self.neighbours_address:
@@ -190,7 +190,7 @@ class Peer:
             else:
 
                 if self.reunion_arrival_time + MAX_REUNION_INTERVAL < time.time() and self.is_waiting:
-                    self.user_interface.add_log("Disconnected")
+                    print("Disconnected")
                     self.is_waiting = False
                     self.neighbours_address.clear()
 
@@ -233,19 +233,19 @@ class Peer:
             raise ValueError("length field does not match packet's body length")
 
         if packet.get_type() == 1:
-            self.user_interface.add_log("register packet arrived")
+            print("register packet arrived")
             self.__handle_register_packet(packet)
         elif packet.get_type() == 2:
-            self.user_interface.add_log("advertise packet arrived")
+            print("advertise packet arrived")
             self.__handle_advertise_packet(packet)
         elif packet.get_type() == 3:
-            self.user_interface.add_log("join packet arrived")
+            print("join packet arrived")
             self.__handle_join_packet(packet)
         elif packet.get_type() == 4:
-            self.user_interface.add_log("message packet arrived")
+            print("message packet arrived")
             self.__handle_message_packet(packet)
         elif packet.get_type() == 5:
-            self.user_interface.add_log("reunion packet arrived")
+            print("reunion packet arrived")
             self.__handle_reunion_packet(packet)
         else:
             pass
@@ -259,6 +259,7 @@ class Peer:
 
         :return:
         """
+
         if self.stream.get_node_by_server(source_address[0], source_address[1]) is None:
             return False
 
@@ -400,7 +401,7 @@ class Peer:
         :return:
         """
 
-        self.user_interface.add_log("Received message:" + str(packet.get_body()))
+        print("Received message:" + str(packet.get_body()))
 
         for neighbour in self.neighbours_address:
             if neighbour != packet.get_source_server_address():
