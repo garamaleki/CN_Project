@@ -134,7 +134,6 @@ class Peer:
         """
         time.sleep(1)
 
-        # TODO: Check reunion????
         while True:
             self.user_interface.add_log(self.stream.read_in_buf())
             stream_buf = self.stream.read_in_buf()
@@ -181,6 +180,7 @@ class Peer:
                     if node.alive and self.reunion_arrival_time_per_peer[node.address] + MAX_REUNION_INTERVAL < time.time():
 
                         if self.reunion_arrival_time_per_peer[node.address]:
+                            self.user_interface.add_log("Disconnected " + str(node.address))
                             del self.reunion_arrival_time_per_peer[node.address]
 
                         if node.address in self.neighbours_address:
@@ -190,6 +190,7 @@ class Peer:
             else:
 
                 if self.reunion_arrival_time + MAX_REUNION_INTERVAL < time.time() and self.is_waiting:
+                    self.user_interface.add_log("Disconnected")
                     self.is_waiting = False
                     self.neighbours_address.clear()
 
@@ -296,22 +297,26 @@ class Peer:
         #  Code design suggestion num 1
 
         if self.is_root and packet.get_body()[:3] == "REQ":
+            print("here1")
 
             if self.__check_registered(packet.get_source_server_address()):
+                print("here2")
                 if self.network_graph.find_node(packet.get_source_server_ip(), packet.get_source_server_port()) is None:
                     self.network_graph.add_node(packet.get_source_server_ip(), packet.get_source_server_port(), None)
 
                 if not self.network_graph.find_node(packet.get_source_server_ip(),
                                                     packet.get_source_server_port()).alive:
+                    print("here3")
                     neighbour = self.__get_neighbour(packet.get_source_server_address())
+                    self.stream.add_node(packet.get_source_server_address(), True)
+                    if not packet.get_source_server_address() in self.neighbours_address:
+                        self.neighbours_address.append(packet.get_source_server_address())
                     new_packet = self.packet_factory.new_advertise_packet("response", (SemiNode.parse_ip(self.ip), SemiNode.parse_port(self.port)), neighbour)
                     self.stream.add_message_to_out_buff(packet.get_source_server_address(), True, new_packet.get_buf())
                     self.network_graph.add_node(packet.get_source_server_ip(), packet.get_source_server_port(),
                                                 neighbour)
 
                     self.reunion_arrival_time_per_peer[packet.get_source_server_address()] = time.time()
-
-                # TODO: Warnings 3???
 
         else:
 
@@ -499,7 +504,8 @@ class Peer:
         """
 
         self.stream.add_node(packet.get_source_server_address(), False)
-        self.neighbours_address.append(packet.get_source_server_address())
+        if not packet.get_source_server_address() in self.neighbours_address:
+            self.neighbours_address.append(packet.get_source_server_address())
 
     def __get_neighbour(self, sender):
         """
